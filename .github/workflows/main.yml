@@ -1,0 +1,56 @@
+name: UI Regression Tests
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+
+jobs:
+  ui-regression:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout repo
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Set up Node.js for Express app
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # 3. Install app dependencies
+      - name: Install npm dependencies
+        run: npm install
+
+      # 4. Start Express app
+      - name: Start server
+        run: |
+          npm start &
+          sleep 3   # give server time to boot
+        env:
+          PORT: 3000
+
+      # 5. Install Python and Selenium
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Selenium + pytest
+        run: pip install selenium pytest
+
+      # 6. Install Chrome + ChromeDriver (required for Selenium)
+      - name: Set up Chrome
+        uses: browser-actions/setup-chrome@v1
+
+      - name: Set up ChromeDriver
+        uses: nanasess/setup-chromedriver@v2
+
+      # 7. Run tests
+      - name: Run regression tests
+        env:
+          BASE_URL: "http://localhost:3000"
+        run: pytest -m regression -q
